@@ -50,8 +50,7 @@ cols <- mtcars$am[ind]+1
 plot(res, col=cols, type="h", ylab="Residuals of linear model mpg ~ wt")
 points(res, col=cols)
 
-mtcars$wt2 <- mtcars$wt^2
-lm_mpg_wt2 <- lm(mpg ~ wt+wt2, data=mtcars) 
+lm_mpg_wt2 <- lm(mpg ~ wt+I(wt^2), data=mtcars) 
 plot(mtcars$wt, mtcars$mpg, xlab="Weight", ylab="MPG")
 ind <- order(mtcars$wt, seq_along(mtcars$wt))
 res <- lm_mpg_wt2$residuals[ind]
@@ -69,8 +68,7 @@ cols <- mtcars$am[ind]+1
 plot(res, col=cols, type="h", ylab="Residuals of linear model mpg ~ hp")
 points(res, col=cols)
 
-mtcars$hp2 <- mtcars$hp^2
-lm_mpg_hp2 <- lm(mpg ~ hp+hp2, data=mtcars) 
+lm_mpg_hp2 <- lm(mpg ~ hp+I(hp^2), data=mtcars) 
 plot(mtcars$hp, mtcars$mpg, xlab="HP", ylab="MPG")
 ind <- order(mtcars$hp, seq_along(mtcars$hp))
 res <- lm_mpg_hp2$residuals[ind]
@@ -78,3 +76,10 @@ cols <- mtcars$am[ind]+1
 lines(mtcars$hp[ind], lm_mpg_hp2$fitted.values[ind], lwd=2, col="blue")
 plot(res, col=cols, type="h", ylab="Residuals of linear model mpg ~ hp + hp^2")
 points(res, col=cols)
+
+R2 <- c(wt=summary(lm(mpg ~ wt, data=mtcars))$adj.r.squared,
+        disp=summary(lm(mpg ~ disp, data=mtcars))$adj.r.squared,
+        hp=summary(lm(mpg ~ hp, data=mtcars))$adj.r.squared,
+        cyl=summary(lm(mpg ~ cyl, data=mtcars))$adj.r.squared,
+        am=summary(lm(mpg ~ am, data=mtcars))$adj.r.squared)
+R2
