@@ -1,0 +1,53 @@
+---
+title: "Regression Models - Course Project"
+author: "Giovanni Picardi"
+date: "23 dicembre 2015"
+output: pdf_document
+---
+
+# Executive summary
+
+Dataset mtcars has been explored trying to find one or more predictors for the outcome `mpg` (miles per US gallon) and in particular to investigate how the variable `am`, an indicator variable of manual transmission (0 = automatic, 1 = manual transmission), is related to `mpg`. An exploratory analysis of the dataset showed that manual transmission is associated to a higher mean mileage per gallon with respect to automatic transmission, but also that a number of other variables are in a much stronger relationship with the outcome, and in a way that could be approximated with linear models. A T-test has been used to check the hypothesis of a higher mean mileage per gallon for manual transmission and a few linear models have been analysed and compared in terms of $R^2$. Finally an approximate quantitative impact of transmission type on miles per gallon has been estimated.
+
+# Exploratory data analysis
+
+The datasets has no missing values, all of the `r dim(mtcars)[2]` variables are numeric and they are related to a wide range of different motorcars (`r dim(mtcars)[1]` models).
+A comparison of boxplots of the variable `mpg` for automatic and manual transmission (Figure 1 in Appendix) shows that the mean mileage per gallon is higher for manual transmission. Although `mpg` distributions are far from being normal (Figue 2 in Appendix), a T-test can help in testing this hypothesis or, more precisely, in rejecting the hypothesis that `mpg` means for automatic and manual transmission are equal:
+```{r}
+t.test(mtcars$mpg[mtcars$am == 0], mtcars$mpg[mtcars$am == 1])
+```
+The negative extremes of the 95% confidence interval confirm the hypothesis that the `mpg` mean for manual transmission is higher.
+
+The relationship between pairs of variables, outcome inlcuded, can be visually examined with `pairs(mtcars)` (Figure 3 in Appendix): the more "linearly" related to `mpg` are the wight `wt`, the displacement `disp` and the horse power `hp`; the most useful discrete variable seems to be the number of cylinders `cyl`: different numbers corresponds to almost disjoint sets of values of `mpg`.
+
+# Modelling
+
+, to a reference model based on the single predictor `am`
+
+# Results
+
+# Appendix
+
+```{r, echo=FALSE, fig.height=4}
+par(cex=0.8)
+boxplot(mpg ~ as.factor(c("Automatic","Manual")[mtcars$am+1]), data=mtcars,
+        ylab="Miles (US) per gallon", xlab="Transmission",
+        main="Figure 1 - Miles per gallon and Transmission")
+```
+    
+```{r, echo=FALSE, fig.height=4}
+library(ggplot2)
+mtcars$Transmission <- as.factor(c("Automatic","Manual")[mtcars$am+1])
+g <- ggplot(data=mtcars, aes(mpg))
+g <- g + geom_density(linetype="dashed", size=1)
+g <- g + geom_density(aes(fill=Transmission), alpha=0.5)
+g <- g + labs(fill="Transmission") + xlab("Miles (US) per gallon") + ylab("Density")
+g <- g + ggtitle("Figure 2 - Miles (US) per gallon densities")
+g <- g + theme(title = element_text(size=rel(0.8)), plot.title=element_text(face="bold"))
+g
+mtcars$Transmission <- c()
+```
+
+```{r, echo=FALSE}
+pairs(mtcars, cex=0.6, main="Figure 3 - Relationship between couples of variables")
+```
