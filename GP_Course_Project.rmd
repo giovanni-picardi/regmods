@@ -7,48 +7,70 @@ output: pdf_document
 
 # Executive summary
 
-Dataset mtcars has been explored trying to find one or more predictors for the outcome `mpg` (miles per US gallon) and to investigate how the variable `am`, an indicator variable of manual transmission, is related to `mpg`. An exploratory analysis of the dataset showed that manual transmission is associated to a higher mean `mpg` with respect to automatic transmission, but also that other variables are in a much stronger relationship with the outcome. A T-test has been used to check the hypothesis of a higher mean mileage per gallon for manual transmission and a few linear models have been analysed and compared in terms of $R^2$ and residuals. Finally an approximate quantitative impact of transmission type on `mpg` has been estimated, based on linear model coefficients associated to the variable `am`.
+Dataset mtcars has been explored trying to find one or more predictors for the outcome `mpg` (miles per US gallon) and to investigate how the variable `am`, an indicator variable of manual transmission, is related to `mpg`. An exploratory analysis of the dataset showed that manual transmission is associated to a higher mean `mpg` with respect to automatic transmission, as confirmed via T-test, but also that other variables are in a much stronger relationship with the outcome. A few linear models have been analysed and compared in terms of $R^2$, confidence interval of the `am` coefficient and residuals. Finally an approximate quantitative impact of transmission type on `mpg` has been estimated, based on the `am` coefficient of the selected model.
 
 # Exploratory data analysis
 
 The datasets has no missing values, all of the `r dim(mtcars)[2]` variables are numeric and they are related to a wide range of different motorcars (`r dim(mtcars)[1]` models).
 A comparison of boxplots of the variable `mpg` for automatic and manual transmission (Figure 1 in Appendix) shows that the mean mileage per gallon is higher for manual transmission. Although `mpg` distributions are far from being normal (Figue 2 in Appendix), a T-test can help in testing this hypothesis or, more precisely, in rejecting the hypothesis that `mpg` means for automatic and manual transmission are equal, giving a cautionary confidence interval:
 ```{r}
-t.test(mtcars$mpg[mtcars$am == 0], mtcars$mpg[mtcars$am == 1])
+t.test(mtcars$mpg[mtcars$am == 0], mtcars$mpg[mtcars$am == 1])$conf
 ```
 The negative extremes of the 95% confidence interval confirm the hypothesis that the `mpg` mean for manual transmission is higher.
 
-The relationship between pairs of variables, outcome inlcuded, can be visually examined with `pairs(mtcars)` (Figure 3 in Appendix): the more "linearly" related to `mpg` are the wight `wt`, the displacement `disp` and the horse power `hp`; the most useful discrete variable seems to be the number of cylinders `cyl`: different numbers corresponds to almost disjoint sets of values of `mpg`.
+The relationship between pairs of variables, outcome inlcuded, can be visually examined with `pairs(mtcars)` (Figure 3 in Appendix): the more "linearly" related to `mpg` are the weight `wt`, the displacement `disp` and the horse power `hp`; the most useful discrete variable seems to be the number of cylinders `cyl`: different numbers corresponds to almost disjoint sets of values of `mpg`.
 
 # Modelling
 
-The percentage of variance captured by simple linear models with a single predictor chosen among `wt`, `disp`, `hp`, `cyl` and `am` is the following:
+The percentage of variance explained ($R^2$) by simple linear models with a single predictor chosen among `wt`, `disp`, `hp`, `cyl` and `am` is the following:
 ```{r, echo=FALSE}
-R2 <- c(wt=summary(lm(mpg ~ wt, data=mtcars))$adj.r.squared,
-        disp=summary(lm(mpg ~ disp, data=mtcars))$adj.r.squared,
-        hp=summary(lm(mpg ~ hp, data=mtcars))$adj.r.squared,
-        cyl=summary(lm(mpg ~ cyl, data=mtcars))$adj.r.squared,
-        am=summary(lm(mpg ~ am, data=mtcars))$adj.r.squared)
+R2 <- c(summary(lm(mpg ~ wt, data=mtcars))$adj.r.squared,
+        summary(lm(mpg ~ disp, data=mtcars))$adj.r.squared,
+        summary(lm(mpg ~ hp, data=mtcars))$adj.r.squared,
+        summary(lm(mpg ~ cyl, data=mtcars))$adj.r.squared,
+        summary(lm(mpg ~ am, data=mtcars))$adj.r.squared)
+names(R2) <- c("mpg ~ wt", "mpg ~ disp", "mpg ~ hp", "mpg ~ cyl", "mpg ~ am")
 R2
 ```
-The poor performance of the model that uses `am` alone is due to the fact that it can obviously only predict the mean values of `mpg` for the two types of transmission with a slope, the coefficient associated to `am` itself, equal to the difference of the means (Figure 4 in Appendix).
-The results show that the best single predictor is the weight `wt`.
-
-A linear model using all the `r dim(mtcars)[2]` variables as predictors reaches a $R^2$ of `r summary(lm(mpg ~ ., data=mtcars))$adj.r.squared`.
-
+The model that uses `am` alone can obviously only predict the mean values of `mpg` for the two types of transmission with a slope equal to the difference of the means (Figure 4 in Appendix), hence its poor performance.
+The results show that the best single predictor is the weight `wt`, but in order to quantify the effects of transmission on mileage per gallon a model with `am` as predictor is needed.
 The models with two predictors, one of them being `am`, and the other being chosen among the previously listed variables, show almost always higher values of $R^2$:
 ```{r, echo=FALSE}
-R2 <- c(wt.am=summary(lm(mpg ~ wt + am, data=mtcars))$adj.r.squared,
-        disp.am=summary(lm(mpg ~ disp + am, data=mtcars))$adj.r.squared,
-        hp.am=summary(lm(mpg ~ hp + am, data=mtcars))$adj.r.squared,
-        cyl.am=summary(lm(mpg ~ cyl + am, data=mtcars))$adj.r.squared)
+R2 <- c(summary(lm(mpg ~ wt + am, data=mtcars))$adj.r.squared,
+        summary(lm(mpg ~ disp + am, data=mtcars))$adj.r.squared,
+        summary(lm(mpg ~ hp + am, data=mtcars))$adj.r.squared,
+        summary(lm(mpg ~ cyl + am, data=mtcars))$adj.r.squared)
+dim(R2) <- c(1,4)
+colnames(R2) <- c("mpg ~ wt+am", "mpg ~ disp+am", "mpg ~ hp+am", "mpg ~ cyl+am")
+rownames(R2) <- "Adjusted R-squared"
 R2
 ```
-but the most interesting result in terms of $R^2$ is obtained using all the 5 variables as predictors:
-```{r}
-summary(lm(mpg ~ wt+hp+disp+cyl+am, data=mtcars))
+but the standard error of the `am` coefficient is sufficiently low with respect to its estimate only in the models with `hp` and `cyl`, of which the first allows a narrower estimate of the `am` coefficient:
+```{r, echo=FALSE}
+cam <- rbind(summary(lm(mpg ~ wt + am, data=mtcars))$coeff["am",c("Estimate","Std. Error")],
+        summary(lm(mpg ~ disp + am, data=mtcars))$coeff["am",c("Estimate","Std. Error")],
+        summary(lm(mpg ~ hp + am, data=mtcars))$coeff["am",c("Estimate","Std. Error")],
+        summary(lm(mpg ~ cyl + am, data=mtcars))$coeff["am",c("Estimate","Std. Error")])
+cam <- t(cam)
+colnames(cam) <- c("mpg ~ wt+am", "mpg ~ disp+am", "mpg ~ hp+am", "mpg ~ cyl+am")
+cam
+```
+The final choice is between two models based on `hp` and `am`: one with and the other without the `hp`$^2$ predictor, both showing residuals with no apparent pattern (Figure 5 in Appendix). The best model in terms of both $R^2$ and residual standard error is the one with the quadratic term in `hp` that shows an $R^2$ quite identical to the linear model using all the `r dim(mtcars)[2]` variables as predictors (`r summary(lm(mpg ~ ., data=mtcars))$adj.r.squared`): 
+```{r, echo=FALSE}
+slmhp2 <- summary(lm(mpg ~ hp+I(hp^2)+am, data=mtcars)) 
+slmhp2[c("coefficients","adj.r.squared")]
+```
+and whose 95% confidence interval on the `am` coefficient estimate is:
+```{r, echo=FALSE}
+slmhp2$coeff["am","Estimate"]+c(-1,1)*qt(.975,df=slmhp2$df[2])*slmhp2$coeff["am","Std. Error"]
 ```
 # Results
+
+The mean mileage per gallon is higher for manual transmission than for automatic transmission with 95% confidence, so manual transmission is on average better than automatic transmission in terms of miles per gallon.
+
+The main variable influencing the miles per gallon figure, besides transmission type, is the horse power.
+
+For fixed horse power, manual transmission brings an increment between `r slmhp2$coeff["am","Estimate"]-qt(.975,df=slmhp2$df[2])*slmhp2$coeff["am","Std. Error"]` and `r slmhp2$coeff["am","Estimate"]+qt(.975,df=slmhp2$df[2])*slmhp2$coeff["am","Std. Error"]` miles per gallon with respect to automatic transmission, with 95% confidence.
 
 # Appendix
 
@@ -81,7 +103,7 @@ par(mfrow=c(1,2), cex=0.8, oma=c(0,0,1,0))
 lm_mpg_am <- lm(mpg ~ am, data=mtcars) 
 plot(mtcars$am, mtcars$mpg,
      xlab="Transmission (0 = Automatic, 1 = Manual)",
-     ylab="MPG")
+     ylab="Miles (US) per gallon")
 abline(lm_mpg_am, lwd=2, col="blue")
 points(c(0,1), c(mean(mtcars$mpg[mtcars$am == 0]),mean(mtcars$mpg[mtcars$am == 1])), col="red", pch="x")
 title("Model fit")
@@ -93,4 +115,26 @@ points(res, col=cols)
 legend("top", legend=c("Automatic", "Manual"), bty="n", pch=1, col=c(1,2))
 title("Residuals")
 mtext(outer=TRUE, text="Figure 4 - The simple linear model mpg ~ am", font=2)
+```
+
+```{r, echo=FALSE}
+par(mfrow=c(1,2), cex=0.8, oma=c(0,0,1,0))
+lm_mpg_hp <- lm(mpg ~ hp+am, data=mtcars) 
+ind <- order(mtcars$hp, seq_along(mtcars$hp))
+res <- lm_mpg_hp$residuals[ind]
+cols <- mtcars$am[ind]+1
+plot(res, col=cols, type="h", xlab="Index in hp ascending order", ylab="Residuals", ylim=c(-5,7))
+points(res, col=cols)
+legend("topright", legend=c("Automatic", "Manual"), bty="n", pch=1, col=c(1,2))
+title("mpg ~ hp+am")
+
+lm_mpg_hp2 <- lm(mpg ~ hp+I(hp^2)+am, data=mtcars) 
+ind <- order(mtcars$hp, seq_along(mtcars$hp))
+res <- lm_mpg_hp2$residuals[ind]
+cols <- mtcars$am[ind]+1
+plot(res, col=cols, type="h", xlab="Index in hp ascending order", ylab="Residuals", ylim=c(-5,7))
+points(res, col=cols)
+legend("topright", legend=c("Automatic", "Manual"), bty="n", pch=1, col=c(1,2))
+title("mpg ~ hp+hp^2+am")
+mtext(outer=TRUE, text="Figure 4 - Residual comparison of linear models", font=2)
 ```
